@@ -99,9 +99,6 @@ escaped=${USERDIR//\//\\/}
 systemctl is-active -q ProjectAlice && systemctl stop ProjectAlice
 
 echo -e "\e[33mJust a moment, updating your system first\e[0m"
-apt-get update
-apt-get dist-upgrade -y
-apt-get install -y git
 
 if [[ -z "$USER" ]]; then
 	echo -e "\e[33mIt's weird, I couldn't detect your username... On what user are you running this device? By default, on a Raspberry Pi, it's 'pi'\e[0m"
@@ -378,390 +375,361 @@ installPython="n"
 installGoogleASR="n"
 installMycroft="n"
 
-read -p $'\e[33mIs this device going to be a (m)ain unit or a (s)atelitte? \e[0m' choice
-case "$choice" in
-	s|S)
-		echo -e "\e[32mSatellite, ok, let me download the required files\e[0m"
-		checkExistingInstallAndDL sat
 
-		read -p $'\e[33mDo you have leds on this device? Like leds I could control? If so, I can install Snips Led Control for that! (y/n)? \e[0m' choice
-		case "$choice" in
-			y|Y)
-				installSLC='y'
-				echo -e "\e[32mOk, I will install SLC!\e[0m"
-				;;
-			*)
-				installSLC='n'
-				echo -e "\e[31mOk, no distraction!\e[0m"
-				;;
-		esac
+echo -e "\e[32mMain unit, ok, let me download the required files\e[0m"
+checkExistingInstallAndDL main
+echo
+echo -e "\e[33mOk, so this device is going to be my main unit, my home\e[0m"
+read -e -p $'\e[33mIn what room are you going to place my main unit? \e[0m' -i 'default' siteId
+siteId=${siteId/_/ /.}
 
-		apt-get install -y mosquitto mosquitto-clients dirmngr build-essential python-dev swig libasound2-plugin-equal
+# echo
+# echo -e "\e[33mI need your Snips console credentials in order to manage the assistant package\e[0m"
+# read -e -p $'\e[33memail: \e[0m' snipsLogin
+# read -e -p $'\e[33mpassword: \e[0m' -s snipsPassword
+# echo
+# read -e -p $'\e[33mYour console username: \e[0m' snipsUsername
+# echo
+# echo -e "\e[33mThank you for this, now, let's continue to the real stuff\e[0m"
+# echo
+# echo -e "\e[33mOh, wait, what language do you want me to use once installed?\e[0m"
+# select snipsLang in "en" "fr"
+# do
+# 	case "$snipsLang" in
+# 		en|fr)
+# 			echo -e "\e[33mOk, setting to boot in $snipsLang\e[0m"; break;;
+# 		*)
+# 			echo -e "\e[31mInvalid choice\e[0m";
+# 	esac
+# done
 
-		checkAndInstallPython sat
+# echo
+# read -p $'\e[33mDo you want to use Google ASR when online (y/n) ? \e[0m' choice
+# case "$choice" in
+# 	n|N)
+# 		echo -e "\e[31mOk, only Snips ASR\e[0m"
+# 		;;
+# 	*)
+# 		installGoogleASR="y"
+# 		echo -e "\e[32mOk, I will install what's needed\e[0m"
+# 		;;
+# esac
 
-		sed -i -e "\$aenable_uart=1" /boot/config.txt
+# read -p $'\e[33mFor a better voice you can use online TTS services, do you want to install one (y/n) ? \e[0m' choice
+# case "$choice" in
+# 	y|Y)
+# 		read -p $'\e[33m(A)mazon Polly, (G)oogle WaveNet or (b)oth? \e[0m' choice
+# 		case "$choice" in
+# 			g|G)
+# 				ttsService="google"
+# 				echo -e "\e[32mGoogle WaveNet, ok!\e[0m"
+# 				read -p $'\e[33mI need you to give me your Google Console API key for Google Wavenet \e[0m' googleWavenetAPIKey
+# 				;;
+# 			a|A|b|B)
+# 				ttsService="amazon"
+# 				if [[ "$choice" == "b" || "$choice" == "B" ]]; then
+# 					ttsService="both"
+# 					read -p $'\e[33mI need you to give me your Google Console API key for Google Wavenet \e[0m' googleWavenetAPIKey
+# 				fi
 
-		moveServiceFile
-		installSnips sat
-		installSLC
-		;;
-	*)
-		echo -e "\e[32mMain unit, ok, let me download the required files\e[0m"
-		checkExistingInstallAndDL main
-		echo
-		echo -e "\e[33mOk, so this device is going to be my main unit, my home\e[0m"
-		read -e -p $'\e[33mIn what room are you going to place my main unit? \e[0m' -i 'default' siteId
-		siteId=${siteId/_/ /.}
+# 				read -p $'\e[33mI need your AWS access key to configure Amazon Polly: \e[0m' awsAccessKey
+# 				read -p $'\e[33mAnd your AWS secret key... Please? \e[0m' awsSecretKey
+# 				echo -e "\e[33mI need you to select the correct AWS API Gateway\e[0m"
+# 				select region in "East USA (Ohio)" "East USA (North Virginia)" "West USA (North California)" "West USA (Oregon)" "Asia Pacific (Hong Kong)" "Asia Pacific (Mumbai)" "Asia Pacific (Seoul)" "Asia Pacific (Singapour)" "Asia Pacific (Sydney)" "Asia Pacific (Tokyo)" "Canada (center)" "China (Beijing)" "China (Ningxia)" "EU (Francfort)" "EU (Irlande)" "EU (London)" "EU (Paris)" "EU (Stockholm)" "South America (Sao Paulo)"
+# 				do
+# 					case "$region" in
+# 						"East USA (Ohio)")
+# 							awsAPIGateway="us-east-2"; break;;
+# 						"East USA (North Virginia)")
+# 							awsAPIGateway="us-east-1"; break;;
+# 						"West USA (North California)")
+# 							awsAPIGateway="us-west-1"; break;;
+# 						"West USA (Oregon)")
+# 							awsAPIGateway="us-west-2"; break;;
+# 						"Asia Pacific (Hong Kong)")
+# 							awsAPIGateway="ap-east-1"; break;;
+# 						"Asia Pacific (Mumbai)")
+# 							awsAPIGateway="ap-south-1"; break;;
+# 						"Asia Pacific (Seoul)")
+# 							awsAPIGateway="ap-northeast-2"; break;;
+# 						"Asia Pacific (Singapour)")
+# 							awsAPIGateway="ap-southeast-1"; break;;
+# 						"Asia Pacific (Sydney)")
+# 							awsAPIGateway="ap-southeast-2"; break;;
+# 						"Asia Pacific (Tokyo)")
+# 							awsAPIGateway="ap-northeast-1"; break;;
+# 						"Canada (center)")
+# 							awsAPIGateway="ca-central-1"; break;;
+# 						"China (Beijing)")
+# 							awsAPIGateway="cn-north-1"; break;;
+# 						"China (Ningxia)")
+# 							awsAPIGateway="cn-northwest-1"; break;;
+# 						"EU (Francfort)")
+# 							awsAPIGateway="eu-central-1"; break;;
+# 						"EU (Irlande)")
+# 							awsAPIGateway="eu-west-1"; break;;
+# 						"EU (London)")
+# 							awsAPIGateway="eu-west-2"; break;;
+# 						"EU (Paris)")
+# 							awsAPIGateway="eu-west-3"; break;;
+# 						"EU (Stockholm)")
+# 							awsAPIGateway="eu-north-1"; break;;
+# 						"South America (Sao Paulo)")
+# 							awsAPIGateway="sa-east-1"; break;;
+# 						*) echo -e "\e[32mInvalid choice\e[0m";;
+# 					esac
+# 				done
+# 				;;
+# 			*)
+# 				echo -e "\e[31mInvalid choice, defaulting to Amazon Polly\e[0m"
+# 				ttsService="amazon"
+# 				break;;
+# 		esac
+# 		;;
+# 	*)
+# 		echo -e "\e[32mOk, only offline TTS\e[0m"
+# 		ttsService="pico"
+# 		;;
+# esac
 
-		echo
-		echo -e "\e[33mI need your Snips console credentials in order to manage the assistant package\e[0m"
-		read -e -p $'\e[33memail: \e[0m' snipsLogin
-		read -e -p $'\e[33mpassword: \e[0m' -s snipsPassword
-		echo
-		read -e -p $'\e[33mYour console username: \e[0m' snipsUsername
-		echo
-		echo -e "\e[33mThank you for this, now, let's continue to the real stuff\e[0m"
-		echo
-		echo -e "\e[33mOh, wait, what language do you want me to use once installed?\e[0m"
-		select snipsLang in "en" "fr"
-		do
-			case "$snipsLang" in
-				en|fr)
-					echo -e "\e[33mOk, setting to boot in $snipsLang\e[0m"; break;;
-				*)
-					echo -e "\e[31mInvalid choice\e[0m";
-			esac
-		done
+# if [[ ${snipsLang} == 'en' ]]; then
+# 	read -p $'\e[33mMycroft is a nice offline TTS if you want just offline TTS or when you are currently offline. I recommend installing it, the wait is worth the effort (y/n) ? \e[0m' choice
+# 	case "$choice" in
+# 		n|N)
+# 			installMycroft="n"
+# 			echo -e "\e[31mOk... PicoTTS it is then...\e[0m"
+# 			;;
+# 		*)
+# 			installMycroft="y"
+# 			echo -e "\e[32mOk, I will install what's needed\e[0m"
+# 			if [[ "$ttsService" == "offline" ]]; then
+# 				ttsService="mycroft"
+# 			fi
+# 			;;
+# 	esac
+# fi
 
-		echo
-		read -p $'\e[33mDo you want to use Google ASR when online (y/n) ? \e[0m' choice
-		case "$choice" in
-			n|N)
-				echo -e "\e[31mOk, only Snips ASR\e[0m"
-				;;
-			*)
-				installGoogleASR="y"
-				echo -e "\e[32mOk, I will install what's needed\e[0m"
-				;;
-		esac
+# read -p $'\e[33mSamba is needed for some modules. Do you need to configure it? (y/n)? \e[0m' choice
+# case "$choice" in
+# 	y|Y)
+# 		installSamba='y'
+# 		echo -e "\e[32myes\e[0m"
+# 		;;
+# 	*)
+# 		installSamba='n'
+# 		echo -e "\e[32mno\e[0m"
+# 		read -p $'\e[33mOk! But make sure to have /share created for Samba!\e[0m'
+# 		;;
+# esac
 
-		read -p $'\e[33mFor a better voice you can use online TTS services, do you want to install one (y/n) ? \e[0m' choice
-		case "$choice" in
-			y|Y)
-				read -p $'\e[33m(A)mazon Polly, (G)oogle WaveNet or (b)oth? \e[0m' choice
-				case "$choice" in
-					g|G)
-						ttsService="google"
-						echo -e "\e[32mGoogle WaveNet, ok!\e[0m"
-						read -p $'\e[33mI need you to give me your Google Console API key for Google Wavenet \e[0m' googleWavenetAPIKey
-						;;
-					a|A|b|B)
-						ttsService="amazon"
-						if [[ "$choice" == "b" || "$choice" == "B" ]]; then
-							ttsService="both"
-							read -p $'\e[33mI need you to give me your Google Console API key for Google Wavenet \e[0m' googleWavenetAPIKey
-						fi
+# read -p $'\e[33mDo you have leds on my main unit? Like leds I could control? If so, I can install Snips Led Control for that! (y/n)? \e[0m' choice
+# case "$choice" in
+# 	y|Y)
+# 		installSLC='y'
+# 		echo -e "\e[32mOk, I will also let SLC do the audio configuration, remember to say yes when it is asking if you want to install your audio device\e[0m"
+# 		;;
+# 	*)
+# 		installSLC='n'
+# 		echo -e "\e[31mOk, no led control...\e[0m"
+# 		;;
+# esac
 
-						read -p $'\e[33mI need your AWS access key to configure Amazon Polly: \e[0m' awsAccessKey
-						read -p $'\e[33mAnd your AWS secret key... Please? \e[0m' awsSecretKey
-						echo -e "\e[33mI need you to select the correct AWS API Gateway\e[0m"
-						select region in "East USA (Ohio)" "East USA (North Virginia)" "West USA (North California)" "West USA (Oregon)" "Asia Pacific (Hong Kong)" "Asia Pacific (Mumbai)" "Asia Pacific (Seoul)" "Asia Pacific (Singapour)" "Asia Pacific (Sydney)" "Asia Pacific (Tokyo)" "Canada (center)" "China (Beijing)" "China (Ningxia)" "EU (Francfort)" "EU (Irlande)" "EU (London)" "EU (Paris)" "EU (Stockholm)" "South America (Sao Paulo)"
-						do
-							case "$region" in
-								"East USA (Ohio)")
-									awsAPIGateway="us-east-2"; break;;
-								"East USA (North Virginia)")
-									awsAPIGateway="us-east-1"; break;;
-								"West USA (North California)")
-									awsAPIGateway="us-west-1"; break;;
-								"West USA (Oregon)")
-									awsAPIGateway="us-west-2"; break;;
-								"Asia Pacific (Hong Kong)")
-									awsAPIGateway="ap-east-1"; break;;
-								"Asia Pacific (Mumbai)")
-									awsAPIGateway="ap-south-1"; break;;
-								"Asia Pacific (Seoul)")
-									awsAPIGateway="ap-northeast-2"; break;;
-								"Asia Pacific (Singapour)")
-									awsAPIGateway="ap-southeast-1"; break;;
-								"Asia Pacific (Sydney)")
-									awsAPIGateway="ap-southeast-2"; break;;
-								"Asia Pacific (Tokyo)")
-									awsAPIGateway="ap-northeast-1"; break;;
-								"Canada (center)")
-									awsAPIGateway="ca-central-1"; break;;
-								"China (Beijing)")
-									awsAPIGateway="cn-north-1"; break;;
-								"China (Ningxia)")
-									awsAPIGateway="cn-northwest-1"; break;;
-								"EU (Francfort)")
-									awsAPIGateway="eu-central-1"; break;;
-								"EU (Irlande)")
-									awsAPIGateway="eu-west-1"; break;;
-								"EU (London)")
-									awsAPIGateway="eu-west-2"; break;;
-								"EU (Paris)")
-									awsAPIGateway="eu-west-3"; break;;
-								"EU (Stockholm)")
-									awsAPIGateway="eu-north-1"; break;;
-								"South America (Sao Paulo)")
-									awsAPIGateway="sa-east-1"; break;;
-								*) echo -e "\e[32mInvalid choice\e[0m";;
-							esac
-						done
-						;;
-					*)
-						echo -e "\e[31mInvalid choice, defaulting to Amazon Polly\e[0m"
-						ttsService="amazon"
-						break;;
-				esac
-				;;
-			*)
-				echo -e "\e[32mOk, only offline TTS\e[0m"
-				ttsService="pico"
-				;;
-		esac
+# read -p $'\e[33mDo you want me to enable sound playback and record (y/n)? \e[0m' choice
+# case "$choice" in
+# 	n|N)
+# 		enableAudio=0
+# 		echo -e "\e[32mSound disabled\e[0m"
+# 		;;
+# 	*)
+# 		enableAudio=1
+# 		echo -e "\e[32mSound enabled\e[0m"
 
-		if [[ ${snipsLang} == 'en' ]]; then
-			read -p $'\e[33mMycroft is a nice offline TTS if you want just offline TTS or when you are currently offline. I recommend installing it, the wait is worth the effort (y/n) ? \e[0m' choice
-			case "$choice" in
-				n|N)
-					installMycroft="n"
-					echo -e "\e[31mOk... PicoTTS it is then...\e[0m"
-					;;
-				*)
-					installMycroft="y"
-					echo -e "\e[32mOk, I will install what's needed\e[0m"
-					if [[ "$ttsService" == "offline" ]]; then
-						ttsService="mycroft"
-					fi
-					;;
-			esac
-		fi
+# 		if [[ "$installSLC" == "n" ]]; then
+# 			echo
+# 			read -p $'\e[33mDo you want me to install my audio device (y/n)? \e[0m' choice
+# 			case "$choice" in
+# 				y|Y)
+# 					echo -e "\e[32mOk, let's do that!\e[0m"
+# 					chmod +x ${USERDIR}/ProjectAliceInstaller/audioInstaller.sh
+# 					${USERDIR}/ProjectAliceInstaller/audioInstaller.sh
+# 					;;
+# 				*)
+# 					echo -e "\e[31mOk, i'll let that to you if needed\e[0m"
+# 					;;
+# 			esac
+# 		fi
 
-		read -p $'\e[33mSamba is needed for some modules. Do you need to configure it? (y/n)? \e[0m' choice
-		case "$choice" in
-			y|Y)
-				installSamba='y'
-				echo -e "\e[32myes\e[0m"
-				;;
-			*)
-				installSamba='n'
-				echo -e "\e[32mno\e[0m"
-				read -p $'\e[33mOk! But make sure to have /share created for Samba!\e[0m'
-				;;
-		esac
+# 		echo
+# 		read -p $'\e[33mPulseaudio can significantly improve the audio quality, do you want to install it (y/n)? \e[0m' choice
+# 		case "$choice" in
+# 			y|Y)
+# 				installPulseAudio='y'
+# 				echo -e "\e[32myes\e[0m"
+# 				;;
+# 			*)
+# 				installPulseAudio='n'
+# 				echo -e "\e[32mOk! No problem!\e[0m"
+# 				;;
+# 		esac
+# 		;;
+# esac
 
-		read -p $'\e[33mDo you have leds on my main unit? Like leds I could control? If so, I can install Snips Led Control for that! (y/n)? \e[0m' choice
-		case "$choice" in
-			y|Y)
-				installSLC='y'
-				echo -e "\e[32mOk, I will also let SLC do the audio configuration, remember to say yes when it is asking if you want to install your audio device\e[0m"
-				;;
-			*)
-				installSLC='n'
-				echo -e "\e[31mOk, no led control...\e[0m"
-				;;
-		esac
+# apt-get install -y apt-transport-https zip unzip mpg123 dirmngr gcc make pkg-config automake libtool libicu-dev libpcre2-dev libasound2-dev portaudio19-dev python-pyaudio python3-pyaudio mosquitto mosquitto-clients libxml2-dev libxslt-dev flac chromium-driver libttspico-utils libav-tools
 
-		read -p $'\e[33mDo you want me to enable sound playback and record (y/n)? \e[0m' choice
-		case "$choice" in
-			n|N)
-				enableAudio=0
-				echo -e "\e[32mSound disabled\e[0m"
-				;;
-			*)
-				enableAudio=1
-				echo -e "\e[32mSound enabled\e[0m"
+# checkAndInstallPython main
+# moveServiceFile
+# installSnips main
 
-				if [[ "$installSLC" == "n" ]]; then
-					echo
-					read -p $'\e[33mDo you want me to install my audio device (y/n)? \e[0m' choice
-					case "$choice" in
-						y|Y)
-							echo -e "\e[32mOk, let's do that!\e[0m"
-							chmod +x ${USERDIR}/ProjectAliceInstaller/audioInstaller.sh
-							${USERDIR}/ProjectAliceInstaller/audioInstaller.sh
-							;;
-						*)
-							echo -e "\e[31mOk, i'll let that to you if needed\e[0m"
-							;;
-					esac
-				fi
+# if [[ "$installPulseAudio" == "y" ]]; then
+# 	echo -e "\e[33mInstalling Pulseaudio\e[0m"
+# 	apt-get install -y pulseaudio
 
-				echo
-				read -p $'\e[33mPulseaudio can significantly improve the audio quality, do you want to install it (y/n)? \e[0m' choice
-				case "$choice" in
-					y|Y)
-						installPulseAudio='y'
-						echo -e "\e[32myes\e[0m"
-						;;
-					*)
-						installPulseAudio='n'
-						echo -e "\e[32mOk! No problem!\e[0m"
-						;;
-				esac
-				;;
-		esac
+# 	if [[ -f /etc/systemd/system/pulseaudio.service ]]; then
+# 		rm /etc/systemd/system/pulseaudio.service
+# 	fi
 
-		apt-get install -y apt-transport-https zip unzip mpg123 dirmngr gcc make pkg-config automake libtool libicu-dev libpcre2-dev libasound2-dev portaudio19-dev python-pyaudio python3-pyaudio mosquitto mosquitto-clients libxml2-dev libxslt-dev flac chromium-driver libttspico-utils libav-tools
+# 	cp ${USERDIR}/ProjectAliceInstaller/pulseaudio.sample /etc/systemd/system/pulseaudio.service
+# 	systemctl --global disable pulseaudio.service pulseaudio.socket
+# 	systemctl enable pulseaudio
+# 	systemctl start pulseaudio
+# 	usermod -G pulse-access -a ${USER}
+# 	usermod -G pulse-access -a _snips
 
-		checkAndInstallPython main
-		moveServiceFile
-		installSnips main
+# 	sudo -u ${USER} pactl list short sinks
+# 	read -p $'\e[33mPlease type the index number of your default audio output \e[0m' output
+# 	sudo -u ${USER} pactl set-default-sink ${output}
 
-		if [[ "$installPulseAudio" == "y" ]]; then
-			echo -e "\e[33mInstalling Pulseaudio\e[0m"
-			apt-get install -y pulseaudio
+# 	sudo -u ${USER} pactl list short sources
+# 	read -p $'\e[33mPlease type the index number of your default audio input \e[0m' input
+# 	sudo -u ${USER} pactl set-default-source ${input}
 
-			if [[ -f /etc/systemd/system/pulseaudio.service ]]; then
-				rm /etc/systemd/system/pulseaudio.service
-			fi
+# 	sed -i -e 's/; default-fragments = 4/default-fragments = 5/' /etc/pulse/daemon.conf
+# 	sed -i -e 's/; default-fragment-size-msec = 25/default-fragment-size-msec = 2/' /etc/pulse/daemon.conf
+# fi
 
-			cp ${USERDIR}/ProjectAliceInstaller/pulseaudio.sample /etc/systemd/system/pulseaudio.service
-			systemctl --global disable pulseaudio.service pulseaudio.socket
-			systemctl enable pulseaudio
-			systemctl start pulseaudio
-			usermod -G pulse-access -a ${USER}
-			usermod -G pulse-access -a _snips
+# sed -i -e 's/\# assistant = "\/usr\/share\/snips\/assistant"/assistant = "'${escaped}'\/ProjectAlice\/assistant"/' /etc/snips.toml
 
-			sudo -u ${USER} pactl list short sinks
-			read -p $'\e[33mPlease type the index number of your default audio output \e[0m' output
-			sudo -u ${USER} pactl set-default-sink ${output}
+# if [[ ! -f "$USERDIR/ProjectAlice/config.py" ]]; then
+# 	cp ${USERDIR}/ProjectAlice/configSample.py ${USERDIR}/ProjectAlice/config.py
+# fi
 
-			sudo -u ${USER} pactl list short sources
-			read -p $'\e[33mPlease type the index number of your default audio input \e[0m' input
-			sudo -u ${USER} pactl set-default-source ${input}
+# sed -i -e 's/"intentsOwner": ""/"intentsOwner": "'${snipsUsername}'"/' ${USERDIR}/ProjectAlice/config.py
+# sed -i -e 's/"activeLanguage": "en"/"activeLanguage": "'${snipsLang}'"/' ${USERDIR}/ProjectAlice/config.py
+# sed -i -e 's/"snipsConsoleLogin": ""/"snipsConsoleLogin": "'${snipsLogin}'"/' ${USERDIR}/ProjectAlice/config.py
 
-			sed -i -e 's/; default-fragments = 4/default-fragments = 5/' /etc/pulse/daemon.conf
-			sed -i -e 's/; default-fragment-size-msec = 25/default-fragment-size-msec = 2/' /etc/pulse/daemon.conf
-		fi
+# if [[ ${ttsService} == 'both' ]]; then
+#   sed -i -e 's/"tts": "pico"/"tts": "amazon"/' ${USERDIR}/ProjectAlice/config.py
+# else
+#   sed -i -e 's/"tts": "pico"/"tts": "'${ttsService}'"/' ${USERDIR}/ProjectAlice/config.py
+# fi
 
-		sed -i -e 's/\# assistant = "\/usr\/share\/snips\/assistant"/assistant = "'${escaped}'\/ProjectAlice\/assistant"/' /etc/snips.toml
+# snipsPasswordEsc=$(sed 's/[\*\.&]/\\&/g' <<< ${snipsPassword})
+# sed -i -e 's/"snipsConsolePassword": ""/"snipsConsolePassword": "'${snipsPasswordEsc}'"/' ${USERDIR}/ProjectAlice/config.py
 
-		if [[ ! -f "$USERDIR/ProjectAlice/config.py" ]]; then
-			cp ${USERDIR}/ProjectAlice/configSample.py ${USERDIR}/ProjectAlice/config.py
-		fi
+# if [[ "$ttsService" == "pico" ]]; then
+# 	sed -i -e 's/"keepTTSOffline": False/"keepTTSOffline": True/' ${USERDIR}/ProjectAlice/config.py
+# fi
 
-		sed -i -e 's/"intentsOwner": ""/"intentsOwner": "'${snipsUsername}'"/' ${USERDIR}/ProjectAlice/config.py
-		sed -i -e 's/"activeLanguage": "en"/"activeLanguage": "'${snipsLang}'"/' ${USERDIR}/ProjectAlice/config.py
-		sed -i -e 's/"snipsConsoleLogin": ""/"snipsConsoleLogin": "'${snipsLogin}'"/' ${USERDIR}/ProjectAlice/config.py
+# if [[ "$installGoogleASR" == "n" ]]; then
+# 	sed -i -e 's/"keepASROffline": False/"keepASROffline": True/' ${USERDIR}/ProjectAlice/config.py
+# else
+# 	sed -i -e 's/"asr": "snips"/"asr": "google"/' ${USERDIR}/ProjectAlice/config.py
+# fi
 
-    if [[ ${ttsService} == 'both' ]]; then
-		  sed -i -e 's/"tts": "pico"/"tts": "amazon"/' ${USERDIR}/ProjectAlice/config.py
-		else
-		  sed -i -e 's/"tts": "pico"/"tts": "'${ttsService}'"/' ${USERDIR}/ProjectAlice/config.py
-		fi
+# sed -i -e 's/\# retry_count = 3/retry_count = 0/' /etc/snips.toml
 
-		snipsPasswordEsc=$(sed 's/[\*\.&]/\\&/g' <<< ${snipsPassword})
-		sed -i -e 's/"snipsConsolePassword": ""/"snipsConsolePassword": "'${snipsPasswordEsc}'"/' ${USERDIR}/ProjectAlice/config.py
+# sed -i -e 's/\# bind = "default@mqtt"/bind = "'${siteId}'@mqtt"/' /etc/snips.toml
 
-		if [[ "$ttsService" == "pico" ]]; then
-			sed -i -e 's/"keepTTSOffline": False/"keepTTSOffline": True/' ${USERDIR}/ProjectAlice/config.py
-		fi
+# if [[ "$enableAudio" -eq 0 ]]; then
+# 	sed -i -e 's/\# disable_playback = false/disable_playback = true/' /etc/snips.toml
+# 	sed -i -e 's/\# disable_capture = false/disable_capture = true/' /etc/snips.toml
+# fi
 
-		if [[ "$installGoogleASR" == "n" ]]; then
-			sed -i -e 's/"keepASROffline": False/"keepASROffline": True/' ${USERDIR}/ProjectAlice/config.py
-		else
-			sed -i -e 's/"asr": "snips"/"asr": "google"/' ${USERDIR}/ProjectAlice/config.py
-		fi
+# grep -qF 'dtparam=i2c_arm=on' '/boot/config.txt' || echo 'dtparam=i2c_arm=on' | tee --append '/boot/config.txt'
+# grep -qF 'i2c-dev' '/etc/modules' || echo 'i2c-dev' | tee --append '/etc/modules'
+# grep -qF 'dtparam=spi=on' '/boot/config.txt' || echo 'dtparam=spi=on' | tee --append '/boot/config.txt'
 
-		sed -i -e 's/\# retry_count = 3/retry_count = 0/' /etc/snips.toml
+# echo -e "\e[33mCatching breath...\e[0m"
+# sleep 2s
 
-		sed -i -e 's/\# bind = "default@mqtt"/bind = "'${siteId}'@mqtt"/' /etc/snips.toml
+# mkdir -p ${USERDIR}/ProjectAlice/cache
+# mkdir -p -m 1777 /share
 
-		if [[ "$enableAudio" -eq 0 ]]; then
-			sed -i -e 's/\# disable_playback = false/disable_playback = true/' /etc/snips.toml
-			sed -i -e 's/\# disable_capture = false/disable_capture = true/' /etc/snips.toml
-		fi
+# chown -R ${USER} ${USERDIR}/ProjectAlice
+# chown -R _snips ${USERDIR}/ProjectAlice/var/cache
+# chmod 775 ${USERDIR}/ProjectAlice/var/cache
 
-		grep -qF 'dtparam=i2c_arm=on' '/boot/config.txt' || echo 'dtparam=i2c_arm=on' | tee --append '/boot/config.txt'
-		grep -qF 'i2c-dev' '/etc/modules' || echo 'i2c-dev' | tee --append '/etc/modules'
-		grep -qF 'dtparam=spi=on' '/boot/config.txt' || echo 'dtparam=spi=on' | tee --append '/boot/config.txt'
+# rm -rf ${USERDIR}/ProjectAlice/assistant/
+# mkdir -p ${USERDIR}/ProjectAlice/trained/assistants/assistant_${snipsLang}/custom_dialogue/sound
+# ln -sfn ${USERDIR}/ProjectAlice/trained/assistants/assistant_${snipsLang} ${USERDIR}/ProjectAlice/assistant
+# ln -sfn ${USERDIR}/ProjectAlice/system/sounds/${snipsLang}/start_of_input.wav ${USERDIR}/ProjectAlice/assistant/custom_dialogue/sound/start_of_input.wav
+# ln -sfn ${USERDIR}/ProjectAlice/system/sounds/${snipsLang}/end_of_input.wav ${USERDIR}/ProjectAlice/assistant/custom_dialogue/sound/end_of_input.wav
+# ln -sfn ${USERDIR}/ProjectAlice/system/sounds/${snipsLang}/error.wav ${USERDIR}/ProjectAlice/assistant/custom_dialogue/sound/error.wav
 
-		echo -e "\e[33mCatching breath...\e[0m"
-		sleep 2s
+# chmod 755 ${USERDIR}/ProjectAlice/system/scripts/langSwitch.sh
+# chmod 755 ${USERDIR}/ProjectAlice/system/scripts/switchTTSOnlineState.sh
 
-		mkdir -p ${USERDIR}/ProjectAlice/cache
-		mkdir -p -m 1777 /share
+# if [[ "$installSamba" == "y" ]]; then
+# 	apt-get install -y samba
+# 	apt-get install -y samba-common-bin
 
-		chown -R ${USER} ${USERDIR}/ProjectAlice
-		chown -R _snips ${USERDIR}/ProjectAlice/var/cache
-		chmod 775 ${USERDIR}/ProjectAlice/var/cache
+# 	rm -f /etc/samba/smb.conf
+# 	cp ${USERDIR}/ProjectAliceInstaller/samba.sample /etc/samba/smb.conf
 
-		rm -rf ${USERDIR}/ProjectAlice/assistant/
-		mkdir -p ${USERDIR}/ProjectAlice/trained/assistants/assistant_${snipsLang}/custom_dialogue/sound
-		ln -sfn ${USERDIR}/ProjectAlice/trained/assistants/assistant_${snipsLang} ${USERDIR}/ProjectAlice/assistant
-		ln -sfn ${USERDIR}/ProjectAlice/system/sounds/${snipsLang}/start_of_input.wav ${USERDIR}/ProjectAlice/assistant/custom_dialogue/sound/start_of_input.wav
-		ln -sfn ${USERDIR}/ProjectAlice/system/sounds/${snipsLang}/end_of_input.wav ${USERDIR}/ProjectAlice/assistant/custom_dialogue/sound/end_of_input.wav
-		ln -sfn ${USERDIR}/ProjectAlice/system/sounds/${snipsLang}/error.wav ${USERDIR}/ProjectAlice/assistant/custom_dialogue/sound/error.wav
+# 	rc=1
+# 	while [[ ${rc} != 0 ]]; do
+# 		smbpasswd -a ${USER}
+# 		rc=$?
+# 	done
 
-		chmod 755 ${USERDIR}/ProjectAlice/system/scripts/langSwitch.sh
-		chmod 755 ${USERDIR}/ProjectAlice/system/scripts/switchTTSOnlineState.sh
+# 	/etc/init.d/samba restart
+# fi
 
-		if [[ "$installSamba" == "y" ]]; then
-			apt-get install -y samba
-			apt-get install -y samba-common-bin
+# installSLC
 
-			rm -f /etc/samba/smb.conf
-			cp ${USERDIR}/ProjectAliceInstaller/samba.sample /etc/samba/smb.conf
+# if [[ "$ttsService" == "amazon" || "$ttsService" == "both" ]]; then
+# pip3 install boto3
 
-			rc=1
-			while [[ ${rc} != 0 ]]; do
-				smbpasswd -a ${USER}
-				rc=$?
-			done
+# 	sed -i -e 's/"awsRegion": "eu-central-1"/"awsRegion": "'${awsAPIGateway}'"/' ${USERDIR}/ProjectAlice/config.py
+# 	sed -i -e 's/"awsAccessKey": ""/"awsAccessKey": "'${awsAccessKey}'"/' ${USERDIR}/ProjectAlice/config.py
+# 	sed -i -e 's/"awsSecretKey": ""/"awsSecretKey": "'${awsSecretKey}'"/' ${USERDIR}/ProjectAlice/config.py
 
-			/etc/init.d/samba restart
-		fi
+# 	#cd ${USERDIR}
+# 	#curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+# 	#unzip awscli-bundle.zip
+# 	#./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+# 	#rm awscli-bundle.zip
+# fi
 
-		installSLC
+# if [[ "$ttsService" == "google" || "$ttsService" == "both" ]]; then
+# 	cd ${USERDIR}
+# 	export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
+# 	echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+# 	curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+# 	apt-get update && sudo apt-get install -y google-cloud-sdk
+# 	gcloud init
 
-		if [[ "$ttsService" == "amazon" || "$ttsService" == "both" ]]; then
-      pip3 install boto3
+# 	mkdir -p /var/empty/.config/gcloud
+# 	chown _snips /var/empty/.config/gcloud
 
-			sed -i -e 's/"awsRegion": "eu-central-1"/"awsRegion": "'${awsAPIGateway}'"/' ${USERDIR}/ProjectAlice/config.py
-			sed -i -e 's/"awsAccessKey": ""/"awsAccessKey": "'${awsAccessKey}'"/' ${USERDIR}/ProjectAlice/config.py
-			sed -i -e 's/"awsSecretKey": ""/"awsSecretKey": "'${awsSecretKey}'"/' ${USERDIR}/ProjectAlice/config.py
+# 	pip3 install --upgrade google-cloud-texttospeech
+# fi
 
-			#cd ${USERDIR}
-			#curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-			#unzip awscli-bundle.zip
-			#./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-			#rm awscli-bundle.zip
-		fi
+# echo -e "\e[33mNeed some rest...\e[0m"
+# sleep 2s
 
-		if [[ "$ttsService" == "google" || "$ttsService" == "both" ]]; then
-			cd ${USERDIR}
-			export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
-			echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-			curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-			apt-get update && sudo apt-get install -y google-cloud-sdk
-			gcloud init
-
-			mkdir -p /var/empty/.config/gcloud
-			chown _snips /var/empty/.config/gcloud
-
-			pip3 install --upgrade google-cloud-texttospeech
-		fi
-
-		echo -e "\e[33mNeed some rest...\e[0m"
-		sleep 2s
-
-		if [[ "$installMycroft" == "y" ]]; then
-			cd ${USERDIR}
-			git clone https://github.com/MycroftAI/mimic.git
-			cd mimic
-			./dependencies.sh --prefix="/usr/local"
-			./autogen.sh
-			./configure --prefix="/usr/local"
-			make
-			/sbin/ldconfig
-			make check
-		fi
-		;;
-esac
+# if [[ "$installMycroft" == "y" ]]; then
+# 	cd ${USERDIR}
+# 	git clone https://github.com/MycroftAI/mimic.git
+# 	cd mimic
+# 	./dependencies.sh --prefix="/usr/local"
+# 	./autogen.sh
+# 	./configure --prefix="/usr/local"
+# 	make
+# 	/sbin/ldconfig
+# 	make check
+# fi
+# ;;
 
 systemctl daemon-reload
 
